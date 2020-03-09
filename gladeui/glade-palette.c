@@ -30,10 +30,10 @@
 
 /**
  * SECTION:glade-palette
- * @Short_Description: A widget to select a #GladeWidgetClass for addition.
+ * @Short_Description: A widget to select a #GladeWidgetAdaptor for addition.
  *
  * #GladePalette is responsible for displaying the list of available
- * #GladeWidgetClass types and publishing the currently selected class
+ * #GladeWidgetAdaptor types and publishing the currently selected class
  * to the Glade core.
  */
 
@@ -344,7 +344,7 @@ glade_palette_new_item (GladePalette *palette, GladeWidgetAdaptor *adaptor)
   g_signal_connect_object (button, "drag-data-get",
                            G_CALLBACK (glade_palette_drag_data_get), adaptor, 0);
 
-  gtk_drag_source_set (button, GDK_BUTTON1_MASK, _glade_dnd_get_target (), 1, 0);
+  gtk_drag_source_set (button, GDK_BUTTON1_MASK, _glade_dnd_get_target (), 1, GDK_ACTION_MOVE | GDK_ACTION_COPY);
 
   gtk_widget_show (item);
 

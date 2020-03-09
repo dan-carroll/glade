@@ -4,8 +4,6 @@
     "runtime-version" : "master",
     "sdk" : "org.gnome.Sdk",
     "command" : "glade",
-    "rename-desktop-file" : "glade.desktop",
-    "rename-appdata-file" : "glade.appdata.xml",
     "tags" : [
         "nightly"
     ],
@@ -15,19 +13,8 @@
         "--socket=x11",
         "--socket=wayland",
         "--filesystem=host",
-        "--device=dri",
-        "--filesystem=xdg-run/dconf",
-        "--filesystem=~/.config/dconf:ro",
-        "--talk-name=ca.desrt.dconf",
-        "--env=DCONF_USER_CONFIG_DIR=.config/dconf"
+        "--device=dri"
     ],
-    "build-options" : {
-        "cflags" : "-O2 -g",
-        "cxxflags" : "-O2 -g",
-        "env" : {
-            "V" : "1"
-        }
-    },
     "cleanup" : [
         "/include",
         "/lib/pkgconfig",
@@ -44,7 +31,6 @@
         {
             "name" : "glade",
             "buildsystem": "meson",
-            "builddir": true,
             "config-opts" : ["-Dman=false"],
             "sources" : [
                 {

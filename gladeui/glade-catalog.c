@@ -162,9 +162,7 @@ catalog_destroy (GladeCatalog *catalog)
       g_list_free (catalog->widget_groups);
     }
 
-  if (catalog->context)
-    glade_xml_context_free (catalog->context);
-
+  g_clear_pointer (&catalog->context, glade_xml_context_free);
   g_slice_free (GladeCatalog, catalog);
 }
 
@@ -423,7 +421,7 @@ catalog_load (GladeCatalog *catalog)
     }
 
   catalog->widget_groups = g_list_reverse (catalog->widget_groups);
-  catalog->context = (glade_xml_context_free (catalog->context), NULL);
+  g_clear_pointer (&catalog->context, glade_xml_context_free);
 
   return;
 }
@@ -722,7 +720,7 @@ glade_catalog_load_all (void)
  * 
  * Returns: The symbolic catalog name.
  */
-G_CONST_RETURN gchar *
+const gchar *
 glade_catalog_get_name (GladeCatalog *catalog)
 {
   g_return_val_if_fail (GLADE_IS_CATALOG (catalog), NULL);
@@ -736,7 +734,7 @@ glade_catalog_get_name (GladeCatalog *catalog)
  * 
  * Returns: The catalog path prefix.
  */
-G_CONST_RETURN gchar *
+const gchar *
 glade_catalog_get_prefix (GladeCatalog *catalog)
 {
   g_return_val_if_fail (GLADE_IS_CATALOG (catalog), NULL);
@@ -750,7 +748,7 @@ glade_catalog_get_prefix (GladeCatalog *catalog)
  * 
  * Returns: The Devhelp search domain.
  */
-G_CONST_RETURN gchar *
+const gchar *
 glade_catalog_get_book (GladeCatalog *catalog)
 {
   g_return_val_if_fail (GLADE_IS_CATALOG (catalog), NULL);
@@ -764,7 +762,7 @@ glade_catalog_get_book (GladeCatalog *catalog)
  * 
  * Returns: The domain to be used to translate strings from this catalog
  */
-G_CONST_RETURN gchar *
+const gchar *
 glade_catalog_get_domain (GladeCatalog *catalog)
 {
   g_return_val_if_fail (GLADE_IS_CATALOG (catalog), NULL);
@@ -778,7 +776,7 @@ glade_catalog_get_domain (GladeCatalog *catalog)
  * 
  * Returns: The prefix for icons.
  */
-G_CONST_RETURN gchar *
+const gchar *
 glade_catalog_get_icon_prefix (GladeCatalog *catalog)
 {
   g_return_val_if_fail (GLADE_IS_CATALOG (catalog), NULL);

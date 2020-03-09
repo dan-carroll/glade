@@ -13,15 +13,8 @@
 
 G_BEGIN_DECLS
 
-#define GLADE_TYPE_WIDGET_ADAPTOR            (glade_widget_adaptor_get_type())
-#define GLADE_WIDGET_ADAPTOR(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GLADE_TYPE_WIDGET_ADAPTOR, GladeWidgetAdaptor))
-#define GLADE_WIDGET_ADAPTOR_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GLADE_TYPE_WIDGET_ADAPTOR, GladeWidgetAdaptorClass))
-#define GLADE_IS_WIDGET_ADAPTOR(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GLADE_TYPE_WIDGET_ADAPTOR))
-#define GLADE_IS_WIDGET_ADAPTOR_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GLADE_TYPE_WIDGET_ADAPTOR))
-#define GLADE_WIDGET_ADAPTOR_GET_CLASS(o)    (G_TYPE_INSTANCE_GET_CLASS ((o), GLADE_WIDGET_ADAPTOR, GladeWidgetAdaptorClass))
-
-typedef struct _GladeWidgetAdaptorPrivate GladeWidgetAdaptorPrivate;
-typedef struct _GladeWidgetAdaptorClass   GladeWidgetAdaptorClass;
+#define GLADE_TYPE_WIDGET_ADAPTOR glade_widget_adaptor_get_type ()
+G_DECLARE_DERIVABLE_TYPE (GladeWidgetAdaptor, glade_widget_adaptor, GLADE, WIDGET_ADAPTOR, GObject)
 
 /**
  * GWA_DEPRECATED:
@@ -407,6 +400,7 @@ typedef void     (* GladeReplaceChildFunc)        (GladeWidgetAdaptor *adaptor,
                                                    GObject            *new_obj);
 
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 /**
  * GladeConstructObjectFunc:
  * @adaptor: A #GladeWidgetAdaptor
@@ -423,6 +417,7 @@ typedef void     (* GladeReplaceChildFunc)        (GladeWidgetAdaptor *adaptor,
 typedef GObject *(* GladeConstructObjectFunc)     (GladeWidgetAdaptor *adaptor,
                                                    guint               n_parameters,
                                                    GParameter         *parameters);
+G_GNUC_END_IGNORE_DEPRECATIONS
 
 /**
  * GladeDestroyObjectFunc:
@@ -613,20 +608,6 @@ typedef gchar   *(* GladeStringFromValueFunc) (GladeWidgetAdaptor *adaptor,
 typedef GladeEditable *(* GladeCreateEditableFunc) (GladeWidgetAdaptor   *adaptor,
                                                     GladeEditorPageType   type);
 
-
-/* Note that everything that must be processed at the creation of
- * every instance is managed on the instance structure, and everywhere
- * that we want to take advantage of inheritance is handled in the class
- * structure.
- */
-struct _GladeWidgetAdaptor
-{
-  GObject      parent_instance;
-
-  GladeWidgetAdaptorPrivate *priv;
-
-};
-
 struct _GladeWidgetAdaptorClass
 {
   GObjectClass               parent_class;
@@ -737,21 +718,18 @@ struct _GladeWidgetAdaptorClass
 #define glade_widget_adaptor_create_widget(adaptor, query, ...) \
     (glade_widget_adaptor_create_widget_real (query, "adaptor", adaptor, __VA_ARGS__));
 
-
-GType                 glade_widget_adaptor_get_type         (void) G_GNUC_CONST;
-
 GType                 glade_widget_adaptor_get_object_type  (GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN gchar *glade_widget_adaptor_get_name         (GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN gchar *glade_widget_adaptor_get_generic_name (GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN gchar *glade_widget_adaptor_get_display_name (GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN gchar *glade_widget_adaptor_get_title        (GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN gchar *glade_widget_adaptor_get_icon_name    (GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN gchar *glade_widget_adaptor_get_missing_icon (GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN gchar *glade_widget_adaptor_get_catalog      (GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN gchar *glade_widget_adaptor_get_book         (GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN GList *glade_widget_adaptor_get_properties   (GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN GList *glade_widget_adaptor_get_packing_props(GladeWidgetAdaptor   *adaptor);
-G_CONST_RETURN GList *glade_widget_adaptor_get_signals      (GladeWidgetAdaptor   *adaptor);
+const gchar *glade_widget_adaptor_get_name         (GladeWidgetAdaptor   *adaptor);
+const gchar *glade_widget_adaptor_get_generic_name (GladeWidgetAdaptor   *adaptor);
+const gchar *glade_widget_adaptor_get_display_name (GladeWidgetAdaptor   *adaptor);
+const gchar *glade_widget_adaptor_get_title        (GladeWidgetAdaptor   *adaptor);
+const gchar *glade_widget_adaptor_get_icon_name    (GladeWidgetAdaptor   *adaptor);
+const gchar *glade_widget_adaptor_get_missing_icon (GladeWidgetAdaptor   *adaptor);
+const gchar *glade_widget_adaptor_get_catalog      (GladeWidgetAdaptor   *adaptor);
+const gchar *glade_widget_adaptor_get_book         (GladeWidgetAdaptor   *adaptor);
+const GList *glade_widget_adaptor_get_properties   (GladeWidgetAdaptor   *adaptor);
+const GList *glade_widget_adaptor_get_packing_props(GladeWidgetAdaptor   *adaptor);
+const GList *glade_widget_adaptor_get_signals      (GladeWidgetAdaptor   *adaptor);
 
 GList                *glade_widget_adaptor_list_adaptors    (void);
 
@@ -783,12 +761,14 @@ GladePropertyDef     *glade_widget_adaptor_get_property_def   (GladeWidgetAdapto
 GladePropertyDef     *glade_widget_adaptor_get_pack_property_def (GladeWidgetAdaptor *adaptor,
                                                                   const gchar        *name);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 GParameter           *glade_widget_adaptor_default_params     (GladeWidgetAdaptor *adaptor,
                                                                gboolean            construct,
                                                                guint              *n_params);
 GObject              *glade_widget_adaptor_construct_object   (GladeWidgetAdaptor *adaptor,
                                                                guint               n_parameters,
                                                                GParameter         *parameters);
+G_GNUC_END_IGNORE_DEPRECATIONS
 void                  glade_widget_adaptor_destroy_object     (GladeWidgetAdaptor *adaptor,
                                                                GObject            *object);
 void                  glade_widget_adaptor_post_create        (GladeWidgetAdaptor *adaptor,
@@ -845,7 +825,7 @@ void                  glade_widget_adaptor_replace_child      (GladeWidgetAdapto
                                                                GObject            *new_obj);
 gboolean              glade_widget_adaptor_query              (GladeWidgetAdaptor *adaptor);
 
-G_CONST_RETURN gchar *glade_widget_adaptor_get_packing_default(GladeWidgetAdaptor *child_adaptor,
+const gchar *glade_widget_adaptor_get_packing_default(GladeWidgetAdaptor *child_adaptor,
                                                                GladeWidgetAdaptor *container_adaptor,
                                                                const gchar        *id);
 gboolean              glade_widget_adaptor_is_container       (GladeWidgetAdaptor *adaptor);
@@ -918,7 +898,7 @@ GladeSignalDef       *glade_widget_adaptor_get_signal_def     (GladeWidgetAdapto
 GladeWidgetAdaptor   *glade_widget_adaptor_get_parent_adaptor (GladeWidgetAdaptor *adaptor);
 
 gboolean              glade_widget_adaptor_has_internal_children (GladeWidgetAdaptor *adaptor);
-
+const gchar          *glade_widget_adaptor_get_type_func      (GladeWidgetAdaptor *adaptor);
 G_END_DECLS
 
 #endif /* _GLADE_WIDGET_ADAPTOR_H_ */

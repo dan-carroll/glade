@@ -1,8 +1,8 @@
 # List of source files containing translatable strings.
 
 # Main application
-data/glade.desktop.in.in
-data/glade.appdata.xml.in
+data/org.gnome.Glade.desktop.in.in
+data/org.gnome.Glade.appdata.xml.in
 src/glade-window.c
 src/main.c
 src/glade.glade
@@ -42,6 +42,7 @@ gladeui/glade-property-shell.c
 gladeui/glade-signal.c
 gladeui/glade-signal-def.c
 gladeui/glade-signal-editor.c
+gladeui/glade-signal-model.c
 gladeui/glade-utils.c
 gladeui/glade-widget-action.c
 gladeui/glade-widget-adaptor.c

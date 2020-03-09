@@ -54,7 +54,7 @@ enum
   PROP_PROJECT
 };
 
-struct _GladeDesignViewPrivate
+typedef struct _GladeDesignViewPrivate
 {
   GladeProject *project;
   GtkWidget *scrolled_window;  /* Main scrolled window */
@@ -63,7 +63,7 @@ struct _GladeDesignViewPrivate
   _GladeDrag *drag_target;
   GObject *drag_data;
   gboolean drag_highlight;
-};
+} GladeDesignViewPrivate;
 
 static GtkVBoxClass *parent_class = NULL;
 
@@ -77,11 +77,14 @@ G_DEFINE_TYPE_WITH_CODE (GladeDesignView, glade_design_view, GTK_TYPE_BOX,
 static void
 glade_design_layout_scroll (GladeDesignView *view, gint x, gint y, gint w, gint h)
 {
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
   gdouble vadj_val, hadj_val, vpage_end, hpage_end;
   GtkAdjustment *vadj, *hadj;
 
-  vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (view->priv->scrolled_window));
-  hadj = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (view->priv->scrolled_window));
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
+
+  vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scrolled_window));
+  hadj = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (priv->scrolled_window));
 
   vadj_val = gtk_adjustment_get_value (vadj);
   hadj_val = gtk_adjustment_get_value (hadj);
@@ -101,6 +104,8 @@ glade_design_layout_scroll (GladeDesignView *view, gint x, gint y, gint w, gint 
 static void 
 on_layout_size_allocate (GtkWidget *widget, GtkAllocation *alloc, GladeDesignView *view)
 {
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
+
   glade_design_layout_scroll (view, alloc->x, alloc->y, alloc->width, alloc->height);
   g_signal_handlers_disconnect_by_func (widget, on_layout_size_allocate, view);
 }
@@ -129,6 +134,8 @@ glade_design_view_selection_changed (GladeProject *project, GladeDesignView *vie
   GtkWidget *layout;
   GList *selection;
 
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
+
   glade_design_view_update_state (glade_project_toplevels (project),
                                   GTK_STATE_FLAG_NORMAL);
 
@@ -155,9 +162,12 @@ glade_design_view_selection_changed (GladeProject *project, GladeDesignView *vie
 static void
 glade_design_view_add_toplevel (GladeDesignView *view, GladeWidget *widget)
 {
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
   GtkWidget *layout;
   GList *toplevels;
   GObject *object;
+
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
 
   if (glade_widget_get_parent (widget) ||
       (object = glade_widget_get_object (widget)) == NULL ||
@@ -168,10 +178,10 @@ glade_design_view_add_toplevel (GladeDesignView *view, GladeWidget *widget)
   /* Create a GladeDesignLayout and add the toplevel widget to the view */
   layout = _glade_design_layout_new (view);
   gtk_widget_set_halign (layout, GTK_ALIGN_START);
-  gtk_box_pack_start (GTK_BOX (view->priv->layout_box), layout, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (priv->layout_box), layout, FALSE, FALSE, 0);
 
-  if ((toplevels = glade_project_toplevels (view->priv->project)))
-    gtk_box_reorder_child (GTK_BOX (view->priv->layout_box), layout, 
+  if ((toplevels = glade_project_toplevels (priv->project)))
+    gtk_box_reorder_child (GTK_BOX (priv->layout_box), layout, 
                            g_list_index (toplevels, GTK_WIDGET (object)));
 
   gtk_container_add (GTK_CONTAINER (layout), GTK_WIDGET (object));
@@ -186,6 +196,8 @@ glade_design_view_remove_toplevel (GladeDesignView *view, GladeWidget *widget)
   GtkWidget *layout;
   GObject *object;
 
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
+
   if (glade_widget_get_parent (widget) ||
       (object = glade_widget_get_object (widget)) == NULL ||
       !GTK_IS_WIDGET (object)) return;
@@ -194,8 +206,10 @@ glade_design_view_remove_toplevel (GladeDesignView *view, GladeWidget *widget)
   if ((layout = gtk_widget_get_parent (GTK_WIDGET (object))) &&
       gtk_widget_is_ancestor (layout, GTK_WIDGET (view)))
     {
+      GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
+
       gtk_container_remove (GTK_CONTAINER (layout), GTK_WIDGET (object));
-      gtk_container_remove (GTK_CONTAINER (view->priv->layout_box), layout);
+      gtk_container_remove (GTK_CONTAINER (priv->layout_box), layout);
     }
 }
 
@@ -205,6 +219,8 @@ glade_design_view_widget_visibility_changed (GladeProject    *project,
                                              gboolean         visible,
                                              GladeDesignView *view)
 {
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
+
   if (visible)
     glade_design_view_add_toplevel (view, widget);
   else
@@ -214,51 +230,40 @@ glade_design_view_widget_visibility_changed (GladeProject    *project,
 static void
 on_project_add_widget (GladeProject *project, GladeWidget *widget, GladeDesignView *view)
 {
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
+
   glade_design_view_add_toplevel (view, widget);
 }
 
 static void
 on_project_remove_widget (GladeProject *project, GladeWidget *widget, GladeDesignView *view)
 {
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
+
   glade_design_view_remove_toplevel (view, widget);
 }
 
 static void
 glade_design_view_set_project (GladeDesignView *view, GladeProject *project)
 {
-  GladeDesignViewPrivate *priv;
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
 
-  priv = view->priv;
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
 
   if (priv->project)
     {
-      g_signal_handlers_disconnect_by_func (priv->project,
-                                            on_project_add_widget,
-                                            view);
-      g_signal_handlers_disconnect_by_func (priv->project,
-                                            on_project_remove_widget,
-                                            view);
-      g_signal_handlers_disconnect_by_func (priv->project,
-                                            gtk_widget_hide,
-                                            priv->scrolled_window);
-      g_signal_handlers_disconnect_by_func (priv->project,
-                                            gtk_widget_show,
-                                            priv->scrolled_window);
-      g_signal_handlers_disconnect_by_func (priv->project,
-                                            glade_design_view_selection_changed,
-                                            view);
-      g_signal_handlers_disconnect_by_func (priv->project,
-                                            glade_design_view_widget_visibility_changed,
-                                            view);
+      g_signal_handlers_disconnect_by_data (priv->project, view);
+      g_signal_handlers_disconnect_by_data (priv->project, priv->scrolled_window);
 
       g_object_set_data (G_OBJECT (priv->project), GLADE_DESIGN_VIEW_KEY, NULL);
-      g_clear_object (&priv->project);
     }
+
+  g_set_object (&priv->project, project);
 
   if (!project)
     return;
 
-  priv->project = g_object_ref (project);
+  g_assert (GLADE_IS_PROJECT (project));
 
   g_signal_connect (project, "add-widget",
                     G_CALLBACK (on_project_add_widget), view);
@@ -301,10 +306,12 @@ glade_design_view_get_property (GObject *object,
                                 GValue *value,
                                 GParamSpec *pspec)
 {
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private ((GladeDesignView *) object);
+
   switch (prop_id)
     {
       case PROP_PROJECT:
-        g_value_set_object (value, GLADE_DESIGN_VIEW (object)->priv->project);
+        g_value_set_object (value, priv->project);
         break;
       default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -351,10 +358,12 @@ glade_design_view_viewport_button_press (GtkWidget       *widget,
                                          GdkEventButton  *event,
                                          GladeDesignView *view)
 {
-  GladeDesignViewPrivate *priv = view->priv;
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private ((GladeDesignView *) view);
   GdkRectangle rect = {event->x, event->y, 8, 8};
   GtkWidget *pop, *chooser;
-  
+
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
+
   if (event->type != GDK_2BUTTON_PRESS)
     return FALSE;
 
@@ -381,9 +390,11 @@ glade_design_view_viewport_button_press (GtkWidget       *widget,
 static gboolean
 glade_design_view_viewport_draw (GtkWidget *widget, cairo_t *cr, GladeDesignView *view)
 {
-  GladeDesignViewPrivate *priv = GLADE_DESIGN_VIEW (view)->priv;
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private ((GladeDesignView *) view);
   GtkStyleContext *context = gtk_widget_get_style_context (widget);
   GdkRGBA fg_color;
+
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
 
   gtk_style_context_get_color (context, gtk_style_context_get_state (context),
                                &fg_color);
@@ -416,22 +427,20 @@ glade_design_view_viewport_draw (GtkWidget *widget, cairo_t *cr, GladeDesignView
 static void
 glade_design_view_init (GladeDesignView *view)
 {
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
   GtkWidget *viewport;
-
-  view->priv = glade_design_view_get_instance_private (view);
 
   gtk_widget_set_no_show_all (GTK_WIDGET (view), TRUE);
   gtk_orientable_set_orientation (GTK_ORIENTABLE (view),
                                   GTK_ORIENTATION_VERTICAL);
 
-  view->priv->project = NULL;
-  view->priv->layout_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
-  gtk_widget_set_valign (view->priv->layout_box, GTK_ALIGN_START);
-  gtk_container_set_border_width (GTK_CONTAINER (view->priv->layout_box), 0);
+  priv->project = NULL;
+  priv->layout_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_set_valign (priv->layout_box, GTK_ALIGN_START);
+  gtk_container_set_border_width (GTK_CONTAINER (priv->layout_box), 0);
 
-  view->priv->scrolled_window = gtk_scrolled_window_new (NULL, NULL);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW
-                                  (view->priv->scrolled_window),
+  priv->scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scrolled_window),
                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
   viewport = gtk_viewport_new (NULL, NULL);
@@ -443,14 +452,14 @@ glade_design_view_init (GladeDesignView *view)
                     G_CALLBACK (glade_design_view_viewport_draw),
                     view);
   gtk_viewport_set_shadow_type (GTK_VIEWPORT (viewport), GTK_SHADOW_NONE);
-  gtk_container_add (GTK_CONTAINER (viewport), view->priv->layout_box);
-  gtk_container_add (GTK_CONTAINER (view->priv->scrolled_window), viewport);
+  gtk_container_add (GTK_CONTAINER (viewport), priv->layout_box);
+  gtk_container_add (GTK_CONTAINER (priv->scrolled_window), viewport);
 
-  gtk_widget_show (view->priv->scrolled_window);
+  gtk_widget_show (priv->scrolled_window);
   gtk_widget_show (viewport);
-  gtk_widget_show_all (view->priv->layout_box);
+  gtk_widget_show_all (priv->layout_box);
   
-  gtk_box_pack_start (GTK_BOX (view), view->priv->scrolled_window, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (view), priv->scrolled_window, TRUE, TRUE, 0);
   
   gtk_container_set_border_width (GTK_CONTAINER (view), 0);
 
@@ -461,13 +470,16 @@ glade_design_view_init (GladeDesignView *view)
 }
 
 static void
-glade_design_view_finalize (GObject *object)
+glade_design_view_dispose (GObject *object)
 {
   GladeDesignView *view = GLADE_DESIGN_VIEW (object);
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
 
   glade_design_view_set_project (view, NULL);
+  g_clear_object (&priv->drag_target);
+  g_clear_object (&priv->drag_data);
 
-  G_OBJECT_CLASS (parent_class)->finalize (object);
+  G_OBJECT_CLASS (parent_class)->dispose (object);
 }
 
 typedef struct
@@ -525,10 +537,12 @@ glade_design_view_drag_motion (GtkWidget *widget,
                                guint time)
 {
   GladeDesignView *view = GLADE_DESIGN_VIEW (widget);
-  GladeDesignViewPrivate *priv = view->priv;
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
   FindInContainerData data;
   _GladeDrag *drag = NULL;
   gint xx, yy;
+
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
 
   if (!priv->drag_data)
     {
@@ -558,19 +572,28 @@ glade_design_view_drag_motion (GtkWidget *widget,
 
       if (drag_target)
         {
-          GladeWidget *gwidget;
+          _GladeDrag *gwidget = NULL;
 
-          if (GLADE_IS_PLACEHOLDER (drag_target))
-            drag = GLADE_DRAG (drag_target);
-          else if ((gwidget = glade_widget_get_from_gobject (drag_target)))
-            {
-              while (gwidget && !_glade_drag_can_drop (GLADE_DRAG (gwidget),
-                                                       xx, yy, priv->drag_data))
-                gwidget = glade_widget_get_parent (gwidget);
+          if (GLADE_IS_PLACEHOLDER (drag_target)) {
+              gwidget = (_GladeDrag *) drag_target;
+          } else if (GLADE_IS_WIDGET (drag_target)) {
+              gwidget = (_GladeDrag *) glade_widget_get_from_gobject ((GladeWidget *) drag_target);
+          }
 
-              if (gwidget)
-                drag = GLADE_DRAG (gwidget);
+          while (gwidget && !_glade_drag_can_drop (gwidget,
+                                                   xx, yy, priv->drag_data)) {
+            if (GLADE_IS_WIDGET (gwidget)) {
+              gwidget = (_GladeDrag *) glade_widget_get_parent ((GladeWidget *) gwidget);
+            } else if (GLADE_IS_PLACEHOLDER (gwidget)) {
+              gwidget = (_GladeDrag *) glade_placeholder_get_parent ((GladePlaceholder *) gwidget);
+            } else {
+              gwidget = NULL;
             }
+          }
+
+          if (gwidget) {
+            drag = GLADE_DRAG (gwidget);
+          }
         }
     }
   else if (_glade_drag_can_drop (GLADE_DRAG (widget), x, y, priv->drag_data))
@@ -605,7 +628,10 @@ glade_design_view_drag_leave (GtkWidget      *widget,
                               GdkDragContext *context,
                               guint           time)
 {
-  GladeDesignViewPrivate *priv = GLADE_DESIGN_VIEW (widget)->priv;
+  GladeDesignView *view = GLADE_DESIGN_VIEW (widget);
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
+
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
 
   if (priv->drag_target)
     glade_design_view_drag_highlight (priv->drag_target, -1, -1);
@@ -616,7 +642,9 @@ on_source_drag_end (GtkWidget       *widget,
                     GdkDragContext  *context, 
                     GladeDesignView *view)
 {
-  GladeDesignViewPrivate *priv = view->priv;
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
+
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
   
   if (priv->drag_target)
     {
@@ -638,15 +666,13 @@ glade_design_view_drag_data_received (GtkWidget        *widget,
 {
   GtkWidget *source = gtk_drag_get_source_widget (context);
   GladeDesignView *view = GLADE_DESIGN_VIEW (widget);
-  GladeDesignViewPrivate *priv = view->priv;
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
+
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
 
   g_signal_handlers_disconnect_by_func (source, on_source_drag_end, view);
 
-  g_clear_object (&priv->drag_data);
-  priv->drag_data = _glade_dnd_get_data (context, selection, info);
-
-  if (priv->drag_data)
-    g_object_ref (priv->drag_data);
+  g_set_object (&priv->drag_data, _glade_dnd_get_data (context, selection, info));
 
   g_signal_connect_object (source, "drag-end", G_CALLBACK (on_source_drag_end), view, 0);
 }
@@ -658,7 +684,10 @@ glade_design_view_drag_drop (GtkWidget       *widget,
                              gint             y,
                              guint            time)  
 {
-  GladeDesignViewPrivate *priv = GLADE_DESIGN_VIEW (widget)->priv;
+  GladeDesignView *view = GLADE_DESIGN_VIEW (widget);
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
+
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
 
   if (priv->drag_data && priv->drag_target)
     {
@@ -700,8 +729,11 @@ glade_design_view_drag_iface_drop (_GladeDrag *drag,
                                    gint x, gint y,
                                    GObject *data)
 {
-  GladeDesignViewPrivate *priv = GLADE_DESIGN_VIEW (drag)->priv;
+  GladeDesignView *view = GLADE_DESIGN_VIEW (drag);
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
   GladeWidget *gsource;
+
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
 
   if (GLADE_IS_WIDGET_ADAPTOR (data))
     {
@@ -722,8 +754,11 @@ glade_design_view_drag_iface_drop (_GladeDrag *drag,
 static void
 glade_design_view_drag_iface_highlight (_GladeDrag *drag, gint x, gint y)
 {
-  GladeDesignViewPrivate *priv = GLADE_DESIGN_VIEW (drag)->priv;
+  GladeDesignView *view = GLADE_DESIGN_VIEW (drag);
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
   gboolean highlight = !(x < 0 || y < 0);
+
+  g_assert (GLADE_IS_DESIGN_VIEW (view));
 
   if (priv->drag_highlight == highlight)
     return;
@@ -752,7 +787,7 @@ glade_design_view_class_init (GladeDesignViewClass *klass)
   object_class = G_OBJECT_CLASS (klass);
   widget_class = GTK_WIDGET_CLASS (klass);
 
-  object_class->finalize = glade_design_view_finalize;
+  object_class->dispose = glade_design_view_dispose;
   object_class->get_property = glade_design_view_get_property;
   object_class->set_property = glade_design_view_set_property;
 
@@ -782,9 +817,11 @@ glade_design_view_class_init (GladeDesignViewClass *klass)
 GladeProject *
 glade_design_view_get_project (GladeDesignView *view)
 {
+  GladeDesignViewPrivate *priv = glade_design_view_get_instance_private (view);
+
   g_return_val_if_fail (GLADE_IS_DESIGN_VIEW (view), NULL);
 
-  return view->priv->project;
+  return priv->project;
 
 }
 

@@ -2139,7 +2139,10 @@ glade_project_load_internal (GladeProject *project)
   g_signal_emit (project, glade_project_signals[PARSE_BEGAN], 0);
 
   if ((domain = glade_xml_get_property_string (root, GLADE_TAG_DOMAIN)))
-    glade_project_set_translation_domain (project, domain);
+    {
+      glade_project_set_translation_domain (project, domain);
+      g_free (domain);
+    }
 
   glade_project_read_comments (project, root);
 
@@ -2664,6 +2667,7 @@ glade_project_write_comments (GladeProject *project,
       /* Replace regular HYPHEN with NON-BREAKING HYPHEN */
       gchar *license = _glade_util_strreplace (priv->license, FALSE, "--", "‑‑");
       gchar *comment = g_strdup_printf (GLADE_PROJECT_COMMENT"\n\n%s\n\n", license);
+      g_free (license);
       comment_node = glade_xml_doc_new_comment (doc, comment);
       g_free (comment);
     }
@@ -2768,7 +2772,10 @@ glade_project_backup (GladeProject *project, const gchar *path, GError **error)
 
   success = g_file_get_contents (project->priv->path, &content, &length, error);
   if (success)
-    success = g_file_set_contents (destination_path, content, length, error);
+    {
+      success = g_file_set_contents (destination_path, content, length, error);
+      g_free (content);
+    }
 
   g_free (destination_path);
 
@@ -2805,7 +2812,7 @@ glade_project_autosave (GladeProject *project, GError **error)
   context = glade_project_write (project);
   doc = glade_xml_context_get_doc (context);
   ret = glade_xml_doc_save (doc, autosave_path);
-  glade_xml_context_destroy (context);
+  glade_xml_context_free (context);
 
   g_free (autosave_path);
 
@@ -2949,7 +2956,7 @@ glade_project_save_verify (GladeProject      *project,
   context = glade_project_write (project);
   doc = glade_xml_context_get_doc (context);
   ret = glade_xml_doc_save (doc, path);
-  glade_xml_context_destroy (context);
+  glade_xml_context_free (context);
 
   canonical_path = glade_util_canonical_path (path);
   g_assert (canonical_path);
@@ -3030,6 +3037,7 @@ glade_project_preview (GladeProject *project, GladeWidget *gwidget)
   project->priv->writing_preview = FALSE;
 
   text = glade_xml_dump_from_context (context);
+  glade_xml_context_free (context);
 
   gwidget = glade_widget_get_toplevel (gwidget);
   if (!GTK_IS_WIDGET (glade_widget_get_object (gwidget)))
@@ -3168,7 +3176,7 @@ glade_project_verify_property_internal (GladeProject    *project,
       !GLADE_PROPERTY_DEF_VERSION_CHECK (pdef, target_major, target_minor))
     {
       GLADE_NOTE (VERIFY, g_print ("VERIFY: Property '%s' of adaptor %s not available in version %d.%d\n",
-                                   glade_property_def_id (pclass),
+                                   glade_property_def_id (pdef),
                                    glade_widget_adaptor_get_name (adaptor),
                                    target_major, target_minor));
 

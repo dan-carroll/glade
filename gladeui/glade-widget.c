@@ -569,6 +569,7 @@ glade_widget_event (GladeWidget *gwidget, GdkEvent *event)
                       GObjectClass & Object Construction
  *******************************************************************************/
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 /*
  * This function creates new GObject parameters based on the GType of the 
  * GladeWidgetAdaptor and its default values.
@@ -716,6 +717,7 @@ glade_widget_build_object (GladeWidget      *widget,
 
   return object;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 
 /**
  * glade_widget_dup_properties:
@@ -1829,7 +1831,7 @@ glade_widget_extract_children (GladeWidget *gwidget)
           else
             {
               /* need to handle placeholders by hand here */
-              extract->placeholder = g_object_ref (child);
+              extract->placeholder = g_object_ref (GTK_WIDGET (child));
               glade_widget_adaptor_remove (gwidget->priv->adaptor,
                                            gwidget->priv->object, child);
             }
@@ -2766,7 +2768,7 @@ glade_widget_get_name (GladeWidget *widget)
  * string if the widget is not intended to be serialized
  * with an ID (i.e. the user did not provide a name).
  */
-G_CONST_RETURN gchar *
+const gchar *
 glade_widget_get_display_name (GladeWidget *widget)
 {
   g_return_val_if_fail (GLADE_IS_WIDGET (widget), NULL);
@@ -2866,7 +2868,7 @@ glade_widget_set_internal (GladeWidget *widget, const gchar *internal)
  *
  * Returns: the internal name of @widget
  */
-G_CONST_RETURN gchar *
+const gchar *
 glade_widget_get_internal (GladeWidget *widget)
 {
   g_return_val_if_fail (GLADE_IS_WIDGET (widget), NULL);
@@ -4398,10 +4400,15 @@ glade_widget_write (GladeWidget     *widget,
     }
   else
     {
+      const gchar *type_func = NULL;
       widget_node = glade_xml_node_new (context, GLADE_XML_TAG_WIDGET);
       glade_xml_node_set_property_string (widget_node,
                                           GLADE_XML_TAG_CLASS,
                                           glade_widget_adaptor_get_name (widget->priv->adaptor));
+
+      glade_xml_node_set_property_string (widget_node,
+                                          GLADE_XML_TAG_TYPE_FUNC,
+                                          glade_widget_adaptor_get_type_func (widget->priv->adaptor));
 
       /* Conditionally omit the ID in the output if the name is 'unset'
        */
@@ -4981,6 +4988,12 @@ glade_widget_verify (GladeWidget *widget)
 
       if (string)
         warning = g_string_free (string, FALSE);
+
+      if (warn_signals)
+        g_list_free (warn_signals);
+
+      if (warn_properties)
+        g_list_free (warn_properties);
     }
 
   glade_widget_set_support_warning (widget, warning);
@@ -5003,7 +5016,7 @@ glade_widget_set_support_warning (GladeWidget *widget, const gchar *warning)
   g_object_notify_by_pspec (G_OBJECT (widget), properties[PROP_SUPPORT_WARNING]);
 }
 
-G_CONST_RETURN gchar *
+const gchar *
 glade_widget_support_warning (GladeWidget *widget)
 {
   g_return_val_if_fail (GLADE_IS_WIDGET (widget), NULL);
